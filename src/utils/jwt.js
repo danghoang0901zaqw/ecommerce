@@ -1,5 +1,7 @@
 const jwt = require("jsonwebtoken");
 const ms = require("ms");
+const AppError = require("./appError");
+const STATUS_CODE = require("../constants/statusCode");
 
 const generateToken = ({ payload, secret, expiresIn }) => {
   const token = jwt.sign(payload, secret, {
@@ -9,6 +11,14 @@ const generateToken = ({ payload, secret, expiresIn }) => {
   return { token, expiredAt };
 };
 
-const verifyToken = (token, secret) => jwt.verify(token, secret);
+const verifyToken = (token, secret) => {
+  try {
+    const decoded = jwt.verify(token, secret);
+    return decoded;
+  } catch (error) {
+    console.log(error)
+    throw new AppError(error.message, STATUS_CODE.UNAUTHORIZED);
+  }
+};
 
 module.exports = { generateToken, verifyToken };

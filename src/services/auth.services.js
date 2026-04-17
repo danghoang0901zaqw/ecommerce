@@ -5,9 +5,10 @@ dotenv.config();
 const { AUTH_MESSAGES } = require("../constants/messages");
 const STATUS_CODE = require("../constants/statusCode");
 const AppError = require("../utils/appError");
-const { generateToken } = require("../utils/jwt");
+const { generateToken, verifyToken } = require("../utils/jwt");
 const { hashPassword, comparePassword } = require("../utils/password");
 const { TOKEN_TYPE } = require("../constants/enum");
+const { up } = require("../databases/migrations/20260417070448-create-token");
 class AuthServices {
   async isExistedEmail(email) {
     const user = await db.User.findOne({
@@ -69,6 +70,57 @@ class AuthServices {
       accessToken,
       refreshToken,
     };
+  }
+
+  async forgotPassword(email) {
+    const user = await db.User.findOne({
+      where: {
+        email,
+      },
+    });
+    if (!user) {
+      throw new AppError(AUTH_MESSAGES.EMAIL_NOT_FOUND, STATUS_CODE.NOT_FOUND);
+    }
+    const forgotPasswordToken = generateToken({
+      payload: { userId: user.userId },
+      secret: process.env.JWT_SECRET,
+      expiresIn: process.env.JWT_RESET_PASSWORD_EXPIRES_IN,
+    });
+    await db.Token.create({
+      userId: user.userId,
+      token: forgotPasswordToken.token,
+      type: TOKEN_TYPE.RESET_PASSWORD,
+      expiredAt: new Date(forgotPasswordToken.expiredAt),
+    });
+    return true;
+  }
+
+  async verifyForgotPasswordToken(token) {
+    const tokenRecord = await db.Token.findOne({
+      where: {
+        token,
+        type: TOKEN_TYPE.RESET_PASSWORD,
+      },
+    });
+    if (!tokenRecord) {
+      throw new AppError(AUTH_MESSAGES.TOKEN_EXPIRED, STATUS_CODE.UNAUTHORIZED);
+    }
+    const now = new Date();
+    if (tokenRecord.expiredAt < now) {
+      await tokenRecord.destroy();
+      throw new AppError(AUTH_MESSAGES.TOKEN_EXPIRED, STATUS_CODE.UNAUTHORIZED);
+    }
+    return true;
+  }
+
+  async resetPassword({ token, password }) {
+    const decode = verifyToken(token, process.env.JWT_SECRET);
+    const hashedPassword = await hashPassword(password);
+    await db.User.update(
+      { password: hashedPassword, updatedAt: new Date() },
+      { where: { userId: decode.userId } },
+    );
+    return true;
   }
 }
 module.exports = new AuthServices();

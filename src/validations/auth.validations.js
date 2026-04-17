@@ -57,7 +57,61 @@ const signInValidation = validate(
     ["body"],
   ),
 );
+
+const forgotPasswordValidation = validate(
+  checkSchema(
+    {
+      email: {
+        notEmpty: {
+          errorMessage: AUTH_VALIDATION_MESSAGES.EMAIL_REQUIRED,
+        },
+        isEmail: {
+          errorMessage: AUTH_VALIDATION_MESSAGES.EMAIL_INVALID,
+        },
+      },
+    },
+    ["body"],
+  ),
+);
+
+const verifyForgotPasswordTokenValidation = validate(
+  checkSchema(
+    {
+      token: {
+        notEmpty: {
+          errorMessage: AUTH_VALIDATION_MESSAGES.PASSWORD_TOKEN_REQUIRED,
+        },
+      },
+    },
+    ["query"],
+  ),
+);
+
+const resetPasswordValidation = validate(
+  checkSchema(
+    {
+      token: {
+        notEmpty: {
+          errorMessage: AUTH_VALIDATION_MESSAGES.PASSWORD_TOKEN_REQUIRED,
+        },
+      },
+      password: {
+        notEmpty: {
+          errorMessage: AUTH_VALIDATION_MESSAGES.PASSWORD_REQUIRED,
+        },
+        isLength: {
+          options: { min: 6 },
+          errorMessage: AUTH_VALIDATION_MESSAGES.PASSWORD_TOO_SHORT,
+        },
+      },
+    },
+    ["body"],
+  ),
+);
 module.exports = {
   signUpValidation,
   signInValidation,
+  forgotPasswordValidation,
+  verifyForgotPasswordTokenValidation,
+  resetPasswordValidation,
 };
