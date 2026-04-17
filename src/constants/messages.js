@@ -1,5 +1,6 @@
 const AUTH_MESSAGES = {
   INVALID_CREDENTIALS: "Invalid email or password.",
+  EMAIL_EXISTS: "Email already exists.",
   USER_NOT_FOUND: "User not found.",
   ACCOUNT_LOCKED: "Your account has been locked. Please contact support.",
   PASSWORD_RESET_SUCCESS:

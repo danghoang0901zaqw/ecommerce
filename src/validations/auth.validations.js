@@ -37,6 +37,27 @@ const signUpValidation = validate(
   ),
 );
 
+const signInValidation = validate(
+  checkSchema(
+    {
+      email: {
+        notEmpty: {
+          errorMessage: AUTH_VALIDATION_MESSAGES.EMAIL_REQUIRED,
+        },
+        isEmail: {
+          errorMessage: AUTH_VALIDATION_MESSAGES.EMAIL_INVALID,
+        },
+      },
+      password: {
+        notEmpty: {
+          errorMessage: AUTH_VALIDATION_MESSAGES.PASSWORD_REQUIRED,
+        },
+      },
+    },
+    ["body"],
+  ),
+);
 module.exports = {
   signUpValidation,
+  signInValidation,
 };

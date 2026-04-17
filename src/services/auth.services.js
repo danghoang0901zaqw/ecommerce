@@ -1,5 +1,74 @@
+const dotenv = require("dotenv");
+const db = require("../databases/models");
+dotenv.config();
+
+const { AUTH_MESSAGES } = require("../constants/messages");
+const STATUS_CODE = require("../constants/statusCode");
+const AppError = require("../utils/appError");
+const { generateToken } = require("../utils/jwt");
+const { hashPassword, comparePassword } = require("../utils/password");
+const { TOKEN_TYPE } = require("../constants/enum");
 class AuthServices {
-  async signUp(req, res, next) {}
-  async signIn(req, res, next) {}
+  async isExistedEmail(email) {
+    const user = await db.User.findOne({
+      where: {
+        email,
+      },
+    });
+    return !!user;
+  }
+  async signUp({ email, password, firstName, lastName }) {
+    const isExistedEmail = await this.isExistedEmail(email);
+    if (isExistedEmail) {
+      throw new AppError(AUTH_MESSAGES.EMAIL_EXISTS, STATUS_CODE.BAD_REQUEST);
+    }
+    const hashedPassword = await hashPassword(password);
+    const user = await db.User.create({
+      email,
+      password: hashedPassword,
+      firstName,
+      lastName,
+    });
+    const { password: passwordUser, ...userData } = user.toJSON();
+    return userData;
+  }
+  async signIn({ email, password }) {
+    const user = await db.User.findOne({
+      where: {
+        email,
+      },
+    });
+    const { password: passwordUser, ...userData } = user.toJSON();
+    const isPasswordValid = await comparePassword(password, passwordUser);
+    if (!user || !isPasswordValid) {
+      throw new AppError(
+        AUTH_MESSAGES.INVALID_CREDENTIALS,
+        STATUS_CODE.BAD_REQUEST,
+      );
+    }
+    const [accessToken, refreshToken] = await Promise.all([
+      generateToken({
+        payload: { userId: userData.userId },
+        secret: process.env.JWT_SECRET,
+        expiresIn: process.env.JWT_ACCESS_EXPIRES_IN,
+      }),
+      generateToken({
+        payload: { userId: userData.userId },
+        secret: process.env.JWT_SECRET,
+        expiresIn: process.env.JWT_REFRESH_EXPIRES_IN,
+      }),
+    ]);
+    await db.Token.create({
+      userId: userData.userId,
+      token: refreshToken.token,
+      type: TOKEN_TYPE.REFRESH_TOKEN,
+      expiredAt: new Date(refreshToken.expiredAt),
+    });
+    return {
+      ...userData,
+      accessToken,
+      refreshToken,
+    };
+  }
 }
 module.exports = new AuthServices();
