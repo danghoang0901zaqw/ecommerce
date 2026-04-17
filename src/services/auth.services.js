@@ -122,5 +122,42 @@ class AuthServices {
     );
     return true;
   }
+
+  async sendVerifyAccount(userId) {
+    const verifyToken = generateToken({
+      payload: { userId },
+      secret: process.env.JWT_SECRET,
+      expiresIn: process.env.JWT_VERIFY_EMAIL_EXPIRES_IN,
+    });
+    await db.Token.create({
+      userId,
+      token: verifyToken.token,
+      type: TOKEN_TYPE.VERIFY_EMAIL,
+      expiredAt: new Date(verifyToken.expiredAt),
+    });
+    return true;
+  }
+
+  async verifyAccount(token) {
+    const tokenRecord = await db.Token.findOne({
+      where: {
+        token,
+        type: TOKEN_TYPE.VERIFY_EMAIL,
+      },
+    });
+    if (!tokenRecord) {
+      throw new AppError(AUTH_MESSAGES.TOKEN_EXPIRED, STATUS_CODE.UNAUTHORIZED);
+    }
+    if (tokenRecord.expiredAt < new Date()) {
+      await tokenRecord.destroy();
+      throw new AppError(AUTH_MESSAGES.TOKEN_EXPIRED, STATUS_CODE.UNAUTHORIZED);
+    }
+    await db.User.update(
+      { verifiedAt: new Date() },
+      { where: { userId: tokenRecord.userId } },
+    );
+    await tokenRecord.destroy();
+    return true;
+  }
 }
 module.exports = new AuthServices();

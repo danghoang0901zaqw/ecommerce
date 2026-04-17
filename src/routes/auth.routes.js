@@ -6,7 +6,10 @@ const {
   resetPasswordValidation,
   verifyForgotPasswordTokenValidation,
   forgotPasswordValidation,
+  sendVerifyAccountValidation,
+  verifyAccountValidation,
 } = require("../validations/auth.validations");
+const { isAuthorized } = require("../middlewares/auth.middleware");
 
 const authRouter = Router();
 
@@ -35,4 +38,18 @@ authRouter.post(
   resetPasswordValidation,
   catchAsync(authControllers.resetPassword),
 );
+
+authRouter.post(
+  "/send-verify-account",
+  isAuthorized,
+  sendVerifyAccountValidation,
+  catchAsync(authControllers.sendVerifyAccount),
+);
+
+authRouter.post(
+  "/verify-account",
+  verifyAccountValidation,
+  catchAsync(authControllers.verifyAccount),
+);
+
 module.exports = authRouter;

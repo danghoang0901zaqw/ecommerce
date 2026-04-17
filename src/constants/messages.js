@@ -1,4 +1,7 @@
+const { UNAUTHORIZED } = require("./statusCode");
+
 const AUTH_MESSAGES = {
+  UNAUTHORIZED: "Unauthorized.",
   INVALID_CREDENTIALS: "Invalid email or password.",
   EMAIL_EXISTS: "Email already exists.",
   EMAIL_NOT_FOUND: "Email not found.",
@@ -17,6 +20,9 @@ const AUTH_VALIDATION_MESSAGES = {
   PASSWORD_TOKEN_REQUIRED: "Password reset token is required.",
   FIRST_NAME_REQUIRED: "First name is required.",
   LAST_NAME_REQUIRED: "Last name is required.",
+  VERIFY_TOKEN_REQUIRED: "Verification token is required.",
+  USER_ID_REQUIRED: "User ID is required.",
+  USER_ID_MISMATCH: "User ID in token does not match the requested user ID.",
 };
 
 module.exports = {

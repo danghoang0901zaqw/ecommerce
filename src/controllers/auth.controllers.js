@@ -45,5 +45,19 @@ class AuthControllers {
       data: result,
     });
   }
+  async sendVerifyAccount(req, res, next) {
+    const { userId } = req.body;
+    const result = await AuthServices.sendVerifyAccount(userId);
+    res.status(STATUS_CODE.OK).json({
+      data: result,
+    });
+  }
+  async verifyAccount(req, res, next) {
+    const { token } = req.query;
+    const result = await AuthServices.verifyAccount(token);
+    res.status(STATUS_CODE.OK).json({
+      data: result,
+    });
+  }
 }
 module.exports = new AuthControllers();

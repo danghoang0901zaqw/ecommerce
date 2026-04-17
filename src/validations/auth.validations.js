@@ -1,6 +1,8 @@
 const { checkSchema } = require("express-validator");
 const validate = require("../utils/validate");
 const { AUTH_VALIDATION_MESSAGES } = require("../constants/messages");
+const AppError = require("../utils/appError");
+const STATUS_CODE = require("../constants/statusCode");
 
 const signUpValidation = validate(
   checkSchema(
@@ -108,10 +110,54 @@ const resetPasswordValidation = validate(
     ["body"],
   ),
 );
+const sendVerifyAccountValidation = validate(
+  checkSchema(
+    {
+      userId: {
+        notEmpty: {
+          errorMessage: AUTH_VALIDATION_MESSAGES.USER_ID_REQUIRED,
+        },
+        isUUID: {
+          errorMessage: AUTH_VALIDATION_MESSAGES.USER_ID_REQUIRED,
+        },
+        custom: {
+          options: (value, { req }) => {
+            const currentUserId = req?.user?.userId;
+            console.log(value, currentUserId);
+            if (value !== currentUserId) {
+              throw new AppError(
+                AUTH_VALIDATION_MESSAGES.USER_ID_MISMATCH,
+                STATUS_CODE.BAD_REQUEST,
+              );
+            }
+            return true;
+          },
+        },
+      },
+    },
+    ["body"],
+  ),
+);
+
+const verifyAccountValidation = validate(
+  checkSchema(
+    {
+      token: {
+        notEmpty: {
+          errorMessage: AUTH_VALIDATION_MESSAGES.VERIFY_TOKEN_REQUIRED,
+        },
+      },
+    },
+    ["query"],
+  ),
+);
+
 module.exports = {
   signUpValidation,
   signInValidation,
   forgotPasswordValidation,
   verifyForgotPasswordTokenValidation,
   resetPasswordValidation,
+  sendVerifyAccountValidation,
+  verifyAccountValidation,
 };
