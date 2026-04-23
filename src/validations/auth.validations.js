@@ -118,12 +118,11 @@ const sendVerifyAccountValidation = validate(
           errorMessage: AUTH_VALIDATION_MESSAGES.USER_ID_REQUIRED,
         },
         isUUID: {
-          errorMessage: AUTH_VALIDATION_MESSAGES.USER_ID_REQUIRED,
+          errorMessage: AUTH_VALIDATION_MESSAGES.USER_ID_INVALID,
         },
         custom: {
           options: (value, { req }) => {
             const currentUserId = req?.user?.userId;
-            console.log(value, currentUserId);
             if (value !== currentUserId) {
               throw new AppError(
                 AUTH_VALIDATION_MESSAGES.USER_ID_MISMATCH,

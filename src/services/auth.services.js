@@ -35,9 +35,29 @@ class AuthServices {
   }
   async signIn({ email, password }) {
     const user = await db.User.findOne({
-      where: {
-        email,
-      },
+      where: { email },
+      include: [
+        {
+          model: db.Role,
+          as: "roles",
+          attributes: ["roleId", "roleName"],
+          through: { attributes: [] },
+          include: [
+            {
+              model: db.Permission,
+              as: "permissions",
+              attributes: ["permissionId", "permissionName"],
+              through: { attributes: [] },
+            },
+          ],
+        },
+        {
+          model: db.Permission,
+          as: "permissions",
+          attributes: ["permissionId", "permissionName"],
+          through: { attributes: [] },
+        },
+      ],
     });
     const { password: passwordUser, ...userData } = user.toJSON();
     const isPasswordValid = await comparePassword(password, passwordUser);

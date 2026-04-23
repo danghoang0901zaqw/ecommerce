@@ -12,6 +12,20 @@ module.exports = (sequelize, DataTypes) => {
       User.hasMany(models.Token, {
         foreignKey: "userId",
       });
+      User.hasMany(models.UserRole, { foreignKey: "userId" });
+      User.hasMany(models.UserPermission, { foreignKey: "userId" });
+      User.belongsToMany(models.Role, {
+        through: models.UserRole,
+        foreignKey: "userId",
+        otherKey: "roleId",
+        as: "roles",
+      });
+      User.belongsToMany(models.Permission, {
+        through: models.UserPermission,
+        foreignKey: "userId",
+        otherKey: "permissionId",
+        as: "permissions",
+      });
     }
   }
   User.init(
@@ -20,7 +34,7 @@ module.exports = (sequelize, DataTypes) => {
         allowNull: false,
         primaryKey: true,
         type: DataTypes.UUID,
-        defaultValue: randomUUID(),
+        defaultValue: DataTypes.UUIDV4,
       },
       firstName: DataTypes.STRING,
       lastName: DataTypes.STRING,
