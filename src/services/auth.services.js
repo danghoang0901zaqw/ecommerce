@@ -8,7 +8,6 @@ const AppError = require("../utils/appError");
 const { generateToken, verifyToken } = require("../utils/jwt");
 const { hashPassword, comparePassword } = require("../utils/password");
 const { TOKEN_TYPE } = require("../constants/enum");
-const { up } = require("../databases/migrations/20260417070448-create-token");
 class AuthServices {
   async isExistedEmail(email) {
     const user = await db.User.findOne({
@@ -178,6 +177,61 @@ class AuthServices {
     );
     await tokenRecord.destroy();
     return true;
+  }
+
+  async signOut({ userId, refreshToken }) {
+    const record = await db.Token.findOne({
+      where: {
+        userId,
+        token: refreshToken,
+      },
+    });
+    if (!record)
+      throw new AppError(AUTH_MESSAGES.UNAUTHORIZED, STATUS_CODE.UNAUTHORIZED);
+    await record.destroy();
+    return true;
+  }
+
+  async refreshToken({ userId, refreshToken }) {
+    const record = await db.Token.findOne({
+      where: {
+        userId,
+        token: refreshToken,
+        type: TOKEN_TYPE.REFRESH_TOKEN,
+      },
+    });
+    if (!record)
+      throw new AppError(AUTH_MESSAGES.UNAUTHORIZED, STATUS_CODE.UNAUTHORIZED);
+    const dataToken = record.get({ plain: true });
+    const isExpired = new Date(dataToken.expiredAt).getTime() < Date.now();
+    if (isExpired) {
+      await record.destroy();
+      throw new AppError(AUTH_MESSAGES.UNAUTHORIZED, STATUS_CODE.UNAUTHORIZED);
+    }
+
+    const [newAccessToken, newRefreshToken] = await Promise.all([
+      generateToken({
+        payload: { userId },
+        secret: process.env.JWT_SECRET,
+        expiresIn: process.env.JWT_ACCESS_EXPIRES_IN,
+      }),
+      generateToken({
+        payload: { userId },
+        secret: process.env.JWT_SECRET,
+        expiresIn: process.env.JWT_REFRESH_EXPIRES_IN,
+      }),
+    ]);
+    await record.destroy();
+    await db.Token.create({
+      userId,
+      token: newRefreshToken.token,
+      type: TOKEN_TYPE.REFRESH_TOKEN,
+      expiredAt: new Date(newRefreshToken.expiredAt),
+    });
+    return {
+      accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
+    };
   }
 }
 module.exports = new AuthServices();

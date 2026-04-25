@@ -16,7 +16,6 @@ const verifyToken = (token, secret) => {
     const decoded = jwt.verify(token, secret);
     return decoded;
   } catch (error) {
-    console.log(error)
     throw new AppError(error.message, STATUS_CODE.UNAUTHORIZED);
   }
 };

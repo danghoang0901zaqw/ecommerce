@@ -151,6 +151,16 @@ const verifyAccountValidation = validate(
   ),
 );
 
+const refreshTokenValidation = validate(
+  checkSchema({
+    refreshToken: {
+      notEmpty: {
+        errorMessage: AUTH_VALIDATION_MESSAGES.PASSWORD_TOKEN_REQUIRED,
+      },
+    },
+  }),
+);
+
 module.exports = {
   signUpValidation,
   signInValidation,
@@ -159,4 +169,5 @@ module.exports = {
   resetPasswordValidation,
   sendVerifyAccountValidation,
   verifyAccountValidation,
+  refreshTokenValidation,
 };
