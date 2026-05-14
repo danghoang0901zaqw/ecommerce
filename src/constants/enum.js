@@ -5,6 +5,13 @@ const TOKEN_TYPE = {
   VERIFY_EMAIL: "VERIFY_EMAIL",
 };
 
+const PRODUCT_STATUS = {
+  DRAFT: "DRAFT",
+  ACTIVE: "ACTIVE",
+  INACTIVE: "INACTIVE",
+};
+
 module.exports = {
   TOKEN_TYPE,
+  PRODUCT_STATUS,
 };
